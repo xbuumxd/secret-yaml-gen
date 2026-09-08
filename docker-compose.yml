@@ -1,0 +1,7 @@
+services:
+  okd-yaml-generator:
+    build: .
+    container_name: okd-yaml-generator
+    ports:
+      - "5005:5005"
+    restart: unless-stopped
