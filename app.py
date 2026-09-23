@@ -511,7 +511,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       ].join('\n');
     }
 
-    function generateInjectSecretYaml(entries) {
+    function generateInjectSecretYaml(entries, secret) {
       const stringData = entries.map(entry => {
         return `  ${entry.name}: ${JSON.stringify(entry.value)}`;
       });
@@ -520,7 +520,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         'apiVersion: v1',
         'kind: Secret',
         'metadata:',
-        '  name: apps-data',
+        `  name: ${formatYamlScalar(secret)}`,
         '  namespace:',
         'type: Opaque',
         'stringData:',
@@ -553,7 +553,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 
       yamlOutput.value = generated;
       secretYamlOutput.value = generateSecretYaml(entries, secret, namespace);
-      injectSecretOutput.value = generateInjectSecretYaml(entries);
+      injectSecretOutput.value = generateInjectSecretYaml(entries, secret);
     }
 
     rawInput.addEventListener('input', processText);

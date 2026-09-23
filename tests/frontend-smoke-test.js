@@ -121,6 +121,12 @@ process.stdin.on('end', () => {
       throw new Error('Inject secret.yaml tidak sesuai: ' + injectSecretOutput.value);
     }
 
+    secretName.value = 'custom-secret';
+    processText();
+    if (!injectSecretOutput.value.includes('  name: custom-secret')) {
+      throw new Error('Nama inject secret tidak mengikuti Secret Target Name.');
+    }
+
     rawInput.value = '- name: EMPTY_VALUE\\n  value:';
     namespaceInput.value = '';
     processText();
