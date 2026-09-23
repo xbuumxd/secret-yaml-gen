@@ -54,3 +54,4 @@ Akses di browser: **`http://localhost:5005`**
 4. **Secret YAML Full Format**: Mengubah setiap pasangan `name`/`value` menjadi manifest `Secret` bertipe `Opaque`, lengkap dengan metadata, `managedFields`, daftar field dinamis, dan encoding Base64 otomatis.
 5. **Namespace Opsional**: Isi namespace pada header bila manifest akan ditujukan ke namespace tertentu.
 6. **Bebas Tanda Petik Ganda**: Menggunakan API Clipboard bawaan browser sehingga saat di-paste ke VS Code / text editor langsung bersih dan rapi.
+7. **Download `secret.yaml`**: Membuat manifest `stringData` dengan nama secret `apps-data` dan namespace kosong, lalu mengunduhnya langsung sebagai `secret.yaml`.

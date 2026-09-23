@@ -12,7 +12,8 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OKD / Kubernetes YAML Secret Generator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg-main: #0d1117;
@@ -27,6 +28,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       --accent-green: #238636;
       --accent-green-hover: #2ea043;
       --code-bg: #090d13;
+      --font-family: 'IBM Plex Mono', monospace;
     }
 
     * {
@@ -36,12 +38,16 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     }
 
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-family: var(--font-family);
       background-color: var(--bg-main);
       color: var(--text-main);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+    }
+
+    input, button, textarea {
+      font-family: inherit;
     }
 
     header {
@@ -93,7 +99,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       background-color: var(--code-bg);
       border: 1px solid var(--border-color);
       color: #7ee787;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--font-family);
       font-size: 14px;
       font-weight: 600;
       padding: 7px 12px;
@@ -170,7 +176,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       background-color: #21262d;
       color: #58a6ff;
       font-size: 11px;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--font-family);
       padding: 2px 7px;
       border-radius: 12px;
       border: 1px solid var(--border-color);
@@ -190,7 +196,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       background-color: var(--code-bg);
       border: none;
       color: var(--text-bright);
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--font-family);
       font-size: 13px;
       line-height: 1.6;
       padding: 14px;
@@ -204,7 +210,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     }
 
     .btn {
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-family: var(--font-family);
       font-size: 12px;
       font-weight: 600;
       border: 1px solid transparent;
@@ -353,10 +359,29 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         <textarea id="secretYamlOutput" class="output-area" readonly placeholder="Secret YAML dengan value Base64 akan muncul di sini..."></textarea>
       </div>
     </div>
+
+    <!-- Card 5: Secret YAML siap disimpan sebagai secret.yaml -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <span>5. secret.yaml (stringData)</span>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-ghost" onclick="copyText('injectSecretOutput')">Copy</button>
+          <button class="btn btn-green" onclick="downloadSecretYaml()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Download secret.yaml
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <textarea id="injectSecretOutput" class="output-area" readonly placeholder="Manifest stringData siap diunduh sebagai secret.yaml akan muncul di sini..."></textarea>
+      </div>
+    </div>
   </main>
 
   <footer>
-    <span>Auto-generated in real-time. Encoding Base64 diproses lokal di browser.</span>
+    <span>Auto-generated in real-time. Data secret diproses lokal di browser.</span>
     <span>Runs on Docker</span>
   </footer>
 
@@ -369,6 +394,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     const extractedKeys = document.getElementById('extractedKeys');
     const yamlOutput = document.getElementById('yamlOutput');
     const secretYamlOutput = document.getElementById('secretYamlOutput');
+    const injectSecretOutput = document.getElementById('injectSecretOutput');
     const keyCount = document.getElementById('keyCount');
 
     // Default sample data
@@ -485,6 +511,23 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       ].join('\n');
     }
 
+    function generateInjectSecretYaml(entries) {
+      const stringData = entries.map(entry => {
+        return `  ${entry.name}: ${JSON.stringify(entry.value)}`;
+      });
+
+      return [
+        'apiVersion: v1',
+        'kind: Secret',
+        'metadata:',
+        '  name: apps-data',
+        '  namespace:',
+        'type: Opaque',
+        'stringData:',
+        ...stringData,
+      ].join('\n');
+    }
+
     function processText() {
       const text = rawInput.value;
       const secret = secretName.value.trim() || 'apps-data';
@@ -500,6 +543,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       if (keys.length === 0) {
         yamlOutput.value = '';
         secretYamlOutput.value = '';
+        injectSecretOutput.value = '';
         return;
       }
 
@@ -509,6 +553,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 
       yamlOutput.value = generated;
       secretYamlOutput.value = generateSecretYaml(entries, secret, namespace);
+      injectSecretOutput.value = generateInjectSecretYaml(entries);
     }
 
     rawInput.addEventListener('input', processText);
@@ -522,6 +567,22 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       navigator.clipboard.writeText(el.value).then(() => {
         showToast();
       });
+    }
+
+    function downloadSecretYaml() {
+      if (!injectSecretOutput.value) return;
+
+      const blob = new Blob([injectSecretOutput.value + '\n'], {
+        type: 'application/yaml;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'secret.yaml';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
     }
 
     function showToast() {

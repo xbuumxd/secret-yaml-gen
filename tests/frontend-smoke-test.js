@@ -88,6 +88,19 @@ process.stdin.on('end', () => {
     'type: Opaque',
   ].join('\n');
 
+  const expectedInjectSecretYaml = [
+    'apiVersion: v1',
+    'kind: Secret',
+    'metadata:',
+    '  name: apps-data',
+    '  namespace:',
+    'type: Opaque',
+    'stringData:',
+    '  REDIS_PASSWORD: "dummy-redis"',
+    '  AWS_ACCESS_KEY_ID: "dummy-access-key"',
+    '  AWS_SECRET_ACCESS_KEY: "dummy-secret-key"',
+  ].join('\n');
+
   const assertions = `
     rawInput.value = manifest;
     namespaceInput.value = 'testing';
@@ -103,6 +116,9 @@ process.stdin.on('end', () => {
     }
     if (secretYamlOutput.value !== expectedSecretYaml) {
       throw new Error('Secret YAML tidak sesuai: ' + secretYamlOutput.value);
+    }
+    if (injectSecretOutput.value !== expectedInjectSecretYaml) {
+      throw new Error('Inject secret.yaml tidak sesuai: ' + injectSecretOutput.value);
     }
 
     rawInput.value = '- name: EMPTY_VALUE\\n  value:';
@@ -122,8 +138,16 @@ process.stdin.on('end', () => {
     'expectedKeys',
     'expectedYaml',
     'expectedSecretYaml',
+    'expectedInjectSecretYaml',
     scriptMatch[1] + assertions,
-  )(document, manifest, expectedKeys, expectedYaml, expectedSecretYaml);
+  )(
+    document,
+    manifest,
+    expectedKeys,
+    expectedYaml,
+    expectedSecretYaml,
+    expectedInjectSecretYaml,
+  );
 
   console.log('JavaScript parser smoke test: OK');
 });
